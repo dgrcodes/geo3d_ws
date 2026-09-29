@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEO3D — Sous la surface</title>
+
+<!-- ============================================================
+     GEO3D — page unique.
+     Le haut de la page est le cube (homepage). En scrollant, la caméra
+     plonge sur le dessus vert du cube, qui se fond dans le terrain de la
+     section « Sous la surface » (ancienne page « découvrir le projet »).
+     Deux scènes Three.js cousues par assets/scripts/merge-scroll.js.
+     ============================================================ -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- global.css (tokens du cube) -> le-projet.css (strates) -> merge.css (fusion, chargé en dernier) -->
+<link rel="stylesheet" href="./assets/styles/global.css">
+<link rel="stylesheet" href="./assets/styles/le-projet.css">
+<link rel="stylesheet" href="./assets/styles/merge.css">
+</head>
+<!-- .pre-dive : cube seul, scroll verrouillé, strates masquées, jusqu'au clic
+     sur « découvrir le projet ». Retiré par merge-scroll.js à la fin de la plongée. -->
+<body class="pre-dive">
+
+<!-- Terrain WebGL (« sous la surface ») — le canvas du cube est injecté par cube-scene.js -->
+<canvas id="scene" aria-hidden="true"></canvas>
+
+<!-- Grain -->
+<svg class="grain" aria-hidden="true">
+  <filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2"/></filter>
+  <rect width="100%" height="100%" filter="url(#n)"/>
+</svg>
+
+<!-- HUD -->
+<header class="hud">
+  <span class="brand">GEO3D</span>
+  <nav><a href="#top" data-to-top class="to-top">retour à la surface</a></nav>
+</header>
+
+<!-- Rail de profondeur (n'apparaît qu'une fois sous la surface) -->
+<aside class="rail" aria-hidden="true">
+  <span class="depth-value" id="depthValue">PROF. 0 M</span>
+  <div class="track">
+    <div class="fill" id="depthFill"></div>
+    <span class="tick"></span>
+    <span class="tick"></span>
+    <span class="tick"></span>
+  </div>
+  <span>−300 M</span>
+</aside>
+
+<!-- ======== SOUS LA SURFACE : la descente ========
+     Le cube (canvas fixe injecté par cube-scene.js) occupe l'écran au départ ;
+     ce contenu est masqué (body.pre-dive) jusqu'à la fin de la plongée. -->
+<main id="projet">
+
+  <!-- ======== 0 M — SURFACE ======== -->
+  <section class="stratum" id="s-surface" data-depth-label="0 M — SURFACE">
+    <p class="depth-tag">0 M — SURFACE</p>
+    <h1 class="display reveal">Sous la<br>surface</h1>
+    <p class="lede">
+      GEO3D est un dispositif de recherche-création qui traduit des données
+      géophysiques de résidus miniers en expérience interactive. Ce que l'instrument mesure dans des milieux à faible contraste,
+      l'écran le rend sensible et compréhensible pour la collectivité.
+    </p>
+    <p class="scroll-cue"><span class="arrow"></span>faire défiler pour forer</p>
+  </section>
+
+  <!-- ======== −40 M — LE PROJET (POURQUOI & MISSION) ======== -->
+  <section class="stratum" id="s-projet" data-depth-label="−40 M — LE PROJET">
+    <p class="depth-tag">−40 M — LE PROJET</p>
+    <div class="cols">
+      <div>
+        <h2 class="display reveal display--lg">Rendre le sol lisible</h2>
+      </div>
+      <div class="why">
+        <p class="annot">POURQUOI &amp; MISSION</p>
+        <p class="lede">
+          <strong>Le constat :</strong> Les méthodes traditionnelles par échantillonnage ponctuel offrent une vision limitée (quelques décimètres cubes) pour des parcs à résidus miniers s'étendant sur des centaines d'hectares.
+        </p>
+        <p class="lede">
+          <strong>La mission :</strong> Combiner la caractérisation géophysique multi-méthodes en continu et la création d'une plateforme numérique interactive (simulation 3D) pour assurer le transfert de connaissances, la transparence et la médiation auprès des citoyens.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== −80 M — OBJECTIFS ======== -->
+  <section class="stratum" id="s-objectifs" data-depth-label="−80 M — OBJECTIFS">
+    <p class="depth-tag">−80 M — OBJECTIFS DE RECHERCHE</p>
+    <h2 class="display reveal display--md">Trois cibles</h2>
+
+    <div class="targets">
+      <!-- Tracés SVG qui se dessinent au scroll, reliant les cibles -->
+      <svg preserveAspectRatio="none" viewBox="0 0 1000 900" aria-hidden="true">
+        <path class="draw" d="M 30 40 L 30 240 L 400 300"/>
+        <path class="draw" d="M 400 340 L 400 540 L 60 600"/>
+        <path class="draw" d="M 60 640 L 60 820 L 420 860"/>
+      </svg>
+
+      <article class="target">
+        <p class="annot">OBJECTIF 1</p>
+        <h3>Caractérisation géophysique continue</h3>
+        <p>Développer une méthodologie multi-méthodes intégrée pour imager le volume
+        des parcs à résidus miniers à faible contraste physique, du drone jusqu'au sous-sol.</p>
+      </article>
+
+      <article class="target">
+        <p class="annot">OBJECTIF 2</p>
+        <h3>Médiation &amp; Plateforme interactive</h3>
+        <p>Créer un outil numérique hébergé localement combinant simulation 3D et requêtes
+        de données pour assurer un transfert de connaissances fluide et accessible aux citoyens.</p>
+      </article>
+
+      <article class="target">
+        <p class="annot">OBJECTIF 3</p>
+        <h3>Former les talents de demain (PHQ)</h3>
+        <p>Proposer un cadre de formation hautement qualifié aux normes ÉDI, combinant
+        compétences géophysiques de pointe, éthique environnementale et nouveaux médias.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ======== −140 M — L'ÉQUIPE ======== -->
+  <section class="stratum" id="s-equipe" data-depth-label="−140 M — L'ÉQUIPE">
+    <p class="depth-tag">−140 M — L'ÉQUIPE &amp; PARTENAIRES</p>
+    <h2 class="display reveal display--md">Stations de mesure</h2>
+
+    <div class="borehole">
+      <article class="station" tabindex="0">
+        <div class="row">
+          <span class="name">Prof. Li Zhen Cheng</span>
+          <span class="role">DIRECTION SCIENTIFIQUE (UQAT)</span>
+        </div>
+        <p class="detail">Supervise la modélisation géophysique, l'intégration multi-méthodes (ERT, électromagnétisme) et l'encadrement des PHQ.</p>
+      </article>
+
+      <article class="station" tabindex="0">
+        <div class="row">
+          <span class="name">Prof. François-Xavier Simon</span>
+          <span class="role">CO-DIRECTION SCIENTIFIQUE (UUS)</span>
+        </div>
+        <p class="detail">Expertise en acquisition sismique avancée (Landstreamer SeisMove®) et cotutelle internationale de recherche.</p>
+      </article>
+
+      <article class="station" tabindex="0">
+        <div class="row">
+          <span class="name">Casey Côtes-Turpin</span>
+          <span class="role">MÉDIATION &amp; ENGAGEMENT CITOYEN</span>
+        </div>
+        <p class="detail">Scénarisation pédagogique, lien avec la communauté et validation de l'interface auprès de la Ville de Rouyn-Noranda.</p>
+      </article>
+
+      <article class="station" tabindex="0">
+        <div class="row">
+          <span class="name">Delphine Grenier</span>
+          <span class="role">RECHERCHE-CRÉATION &amp; DÉVELOPPEMENT</span>
+        </div>
+        <p class="detail">Conception de l'expérience interactive, développement temps réel et direction visuelle de la plateforme 3D.</p>
+      </article>
+
+      <article class="station" tabindex="0">
+        <div class="row">
+          <span class="name">Rosalie Moreau</span>
+          <span class="role">RECHERCHE-CRÉATION &amp; DÉVELOPPEMENT</span>
+        </div>
+        <p class="detail">Architecture de données, modélisation des strates environnementales et ergonomie utilisateur (UX/UI).</p>
+      </article>
+
+      <article class="station" tabindex="0">
+        <div class="row">
+          <span class="name">Maxime Constantineau</span>
+          <span class="role">RECHERCHE-CRÉATION &amp; DÉVELOPPEMENT</span>
+        </div>
+        <p class="detail">Simulation des données géophysiques, intégration des moteurs temps réel et systèmes d'interaction du forage.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ======== −220 M — LES DONNÉES (strate sombre) ======== -->
+  <section class="stratum" id="s-donnees" data-depth-label="−220 M — LES DONNÉES">
+    <!-- Courbes de niveau en arrière-plan -->
+    <div class="contours" aria-hidden="true">
+      <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+        <path d="M-50 700 C 300 620, 500 760, 800 680 S 1300 600, 1500 660"/>
+        <path d="M-50 640 C 280 560, 520 700, 820 620 S 1280 540, 1500 600"/>
+        <path d="M-50 580 C 260 500, 540 640, 840 560 S 1260 480, 1500 540"/>
+        <path d="M-50 520 C 240 440, 560 580, 860 500 S 1240 420, 1500 480"/>
+      </svg>
+    </div>
+
+    <p class="depth-tag">−220 M — LES DONNÉES COLLECTÉES</p>
+    <h2 class="display reveal display--md">Ce que le sol répond</h2>
+
+    <div class="data-grid">
+      <div class="datum">
+        <p class="num"><span class="count" data-to="87">0</span></p>
+        <p class="label">Sites miniers abandonnés</p>
+        <p>Inventoriés en Abitibi-Témiscamingue sous la responsabilité du MRNF.</p>
+      </div>
+      <div class="datum">
+        <p class="num"><span class="count" data-to="7">0</span></p>
+        <p class="label">Méthodes géophysiques</p>
+        <p>Déployées et comparées (Sismique, ERT, Mag, Gravi, EM, GPR, Spectrométrie).</p>
+      </div>
+      <div class="datum">
+        <p class="num"><span class="count" data-to="8">0</span><sup>PHQ</sup></p>
+        <p class="label">Étudiants &amp; Chercheurs</p>
+        <p>Maitrises, doctorats et postdocs formés au sein du projet.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== −280 M — TECHNOLOGIES ======== -->
+  <section class="stratum" id="s-techno" data-depth-label="−280 M — TECHNOLOGIES">
+    <p class="depth-tag">−280 M — TECHNOLOGIES &amp; INSTRUMENTS</p>
+    <h2 class="display reveal display--md">Instruments</h2>
+
+    <div class="tech-list">
+      <div class="tech"><span class="t-name">SeisMove® &amp; GEM-2</span><span class="t-for">ACQUISITION DE TERRAIN (SOL &amp; DRONE)</span></div>
+      <div class="tech"><span class="t-name">Unity / WebGL</span><span class="t-for">EXPÉRIENCE INTERACTIVE &amp; SIMULATION 3D</span></div>
+      <div class="tech"><span class="t-name">Three.js &amp; GSAP</span><span class="t-for">VISUALISATION WEB &amp; NARRATION AU SCROLL</span></div>
+    </div>
+  </section>
+
+  <!-- ======== REMONTÉE ======== -->
+  <section class="stratum" id="s-fin" data-depth-label="REMONTÉE">
+    <p class="depth-tag">REMONTÉE — RETOUR À LA SURFACE</p>
+    <h2 class="display reveal">Continuer<br>l'exploration</h2>
+    <a class="cta" href="donnees.html">analyser les données →</a>
+  </section>
+
+</main>
+
+<!-- ================= LIBS (cdnjs) ================= -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lenis/1.1.13/lenis.min.js"></script>
+
+<!-- ================= SCÈNES + ORCHESTRATION ================= -->
+<!-- Ordre requis : utils -> cube -> terrain -> orchestrateur -->
+<script src="./assets/scripts/dom-utils.js"></script>
+<script src="./assets/scripts/cube-scene.js"></script>
+<script src="./assets/scripts/le-projet.js"></script>
+<script src="./assets/scripts/merge-scroll.js"></script>
+</body>
+</html>

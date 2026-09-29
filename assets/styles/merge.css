@@ -1,0 +1,64 @@
+/* ==========================================================================
+   MERGE -- page unique : héros du cube (index) + descente « sous la surface »
+   (le-projet) cousus en un seul scroll. Ce fichier est chargé EN DERNIER et
+   surcharge global.css / le-projet.css là où ils supposaient une page figée
+   (sans scroll) ou une page isolée.
+   ========================================================================== */
+
+/* global.css met overflow:hidden ; ici on rend la page défilable. */
+html,
+body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: auto;
+  min-height: 100%;
+}
+
+/* ---------- Empilement des couches fixes (du fond vers l'avant) ----------
+   .bg-dots (grille) < cube-canvas < #scene (terrain) < nav du cube < grain
+   < contenu (main/strates) < HUD (hud + rail). */
+.bg-dots            { z-index: 0; }
+#cube-canvas        { z-index: 1; }
+#scene              { z-index: 2; opacity: 0; } /* terrain révélé au fondu */
+.cube-nav-svg       { z-index: 3; }
+.cube-nav-container { z-index: 4; }
+.grain              { z-index: 5; }
+main                { z-index: 6; }
+.hud                { z-index: 10; }
+.rail               { z-index: 10; }
+
+/* ---------- Le cube (héros) et « la plongée » ----------
+   Le cube est un canvas fixe plein écran. Tant qu'on n'a pas cliqué sur
+   « découvrir le projet », le scroll est verrouillé et le contenu des strates
+   reste masqué : seul le cube est visible. merge-scroll.js retire .pre-dive à
+   la fin de la plongée, révélant la surface. Le contenu apparaît en fondu,
+   juste après le terrain. */
+main {
+  transition: opacity .6s ease;
+}
+body.pre-dive {
+  overflow: hidden; /* verrou de secours si Lenis est absent (mouvement réduit) */
+}
+body.pre-dive main {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- HUD de profondeur : appartient à la descente ----------
+   Le rail et le lien « retour à la surface » n'apparaissent qu'une fois passé
+   la surface (le fondu vers le terrain). La marque GEO3D reste visible. */
+.rail {
+  opacity: 0;
+  transition: opacity .6s ease;
+}
+body.past-surface .rail { opacity: 1; }
+
+.hud .to-top {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .5s ease;
+}
+body.past-surface .hud .to-top {
+  opacity: 1;
+  pointer-events: auto;
+}

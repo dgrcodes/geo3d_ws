@@ -1,0 +1,383 @@
+/* ===== Explorer les données — styles propres à cette page ===== */
+body {
+    margin: 0;
+    overflow: hidden;
+    background: var(--bg-color, #d7dcda);
+    font-family: sans-serif;
+}
+
+.bg-dots {
+    position: fixed;
+    inset: -40px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+header.donnees-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 28px;
+    z-index: 5;
+}
+header.donnees-header .brand {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--nav-label-color, #2a2a2a);
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+header.donnees-header .section {
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--nav-line-color, #3d2b1f);
+    opacity: 0.75;
+}
+
+.donnees-ui {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 4;
+}
+.donnees-ui > * { pointer-events: auto; }
+
+.donnees-caption {
+    position: fixed;
+    left: 28px;
+    bottom: 24px;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--nav-label-color, #2a2a2a);
+    opacity: 1;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+}
+.donnees-caption-num {
+    font-weight: 700;
+    margin-right: 6px;
+}
+
+.donnees-axis-label {
+    position: fixed;
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--nav-label-color, #2a2a2a);
+    opacity: 0.5;
+    pointer-events: none;
+}
+.donnees-axis-depth {
+    left: 16px;
+    top: 50%;
+    writing-mode: vertical-rl;
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.donnees-legend {
+    position: fixed;
+    top: 90px;
+    left: 20px;
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    color: var(--nav-label-color, #2a2a2a);
+    pointer-events: none;
+}
+.donnees-legend-title {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.6rem;
+    opacity: 0.7;
+    margin-bottom: 6px;
+}
+.donnees-legend-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+.donnees-legend-bar {
+    width: 14px;
+    height: 128px;
+    border-radius: 2px;
+    border: 1px solid var(--nav-line-color, #3d2b1f);
+}
+.donnees-legend-ticks {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.8;
+}
+.donnees-axis-profile {
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+}
+
+.donnees-callout-svg {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.donnees-hover-tag {
+    position: fixed;
+    opacity: 0;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--nav-label-color, #2a2a2a);
+    background: color-mix(in srgb, var(--bg-color, #d7dcda) 82%, transparent);
+    border: 1px solid var(--nav-line-color, #3d2b1f);
+    border-radius: 2px;
+    white-space: nowrap;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+    z-index: 6;
+}
+.donnees-hover-tag span {
+    font-weight: 700;
+    margin-right: 6px;
+    opacity: 0.6;
+}
+
+.donnees-callout {
+    position: fixed;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--nav-label-color, #2a2a2a);
+    padding: 8px 12px;
+    border-left: 1px solid var(--nav-line-color, #3d2b1f);
+    background: color-mix(in srgb, var(--bg-color, #d7dcda) 65%, transparent);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    pointer-events: none;
+    max-width: 240px;
+}
+.donnees-callout span {
+    display: inline-block;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.6;
+    margin-right: 8px;
+}
+.donnees-callout-main h2 {
+    margin: 6px 0 8px;
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+}
+.donnees-callout-main p {
+    margin: 0;
+    opacity: 0.85;
+}
+.donnees-callout-image {
+    display: block;
+    width: 100%;
+    height: 150px;
+    margin-top: 10px;
+    border-radius: 3px;
+    object-fit: cover;
+}
+.donnees-callout-image-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: 1px dashed var(--nav-line-color, #3d2b1f);
+    opacity: 0.5;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+}
+.donnees-callout-image-placeholder span {
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+}
+.donnees-callout-eyebrow {
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.55;
+}
+
+.donnees-back {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    opacity: 0;
+    pointer-events: none;
+    background: none;
+    border: 1px solid var(--nav-line-color, #3d2b1f);
+    border-radius: 2px;
+    padding: 8px 18px;
+    font-size: 0.74rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--nav-label-color, #2a2a2a);
+    cursor: pointer;
+    transition: opacity 0.5s ease, background 0.25s ease;
+}
+.donnees-back:hover {
+    background: color-mix(in srgb, var(--nav-line-color, #3d2b1f) 12%, transparent);
+}
+
+/* ===== Anomaly list (side panel of buttons) ===== */
+.donnees-list {
+    position: fixed;
+    top: 84px;
+    right: 28px;
+    width: 268px;
+    max-height: calc(100vh - 140px);
+    display: flex;
+    flex-direction: column;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.donnees-list.is-hidden {
+    opacity: 0;
+    transform: translateX(16px);
+    pointer-events: none;
+}
+.donnees-list-head {
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--nav-label-color, #2a2a2a);
+    opacity: 0.6;
+    padding: 0 4px 8px;
+    border-bottom: 1px solid color-mix(in srgb, var(--nav-line-color, #3d2b1f) 35%, transparent);
+    margin-bottom: 6px;
+}
+.donnees-list-items {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 2px;
+}
+.donnees-list-item {
+    border-bottom: 1px solid color-mix(in srgb, var(--nav-line-color, #3d2b1f) 16%, transparent);
+}
+.donnees-list-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: none;
+    border: none;
+    padding: 9px 4px;
+    cursor: pointer;
+    text-align: left;
+    color: var(--nav-label-color, #2a2a2a);
+    font-size: 0.82rem;
+    letter-spacing: 0.01em;
+    transition: background 0.2s ease;
+}
+.donnees-list-btn:hover {
+    background: color-mix(in srgb, var(--nav-line-color, #3d2b1f) 8%, transparent);
+}
+.donnees-list-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+    box-shadow: 0 0 6px 1px currentColor;
+}
+.donnees-list-num {
+    font-weight: 700;
+    opacity: 0.55;
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+}
+.donnees-list-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.donnees-list-caret {
+    opacity: 0.5;
+    font-weight: 700;
+    transition: transform 0.25s ease;
+}
+.donnees-list-item.is-open .donnees-list-caret {
+    transform: rotate(45deg);
+}
+/* Collapsed by default; expands when its row carries .is-open. The
+   0fr -> 1fr grid-row trick animates height with a single wrapper
+   child (.donnees-list-detail-inner) that clips the overflow. */
+.donnees-list-detail {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+}
+.donnees-list-item.is-open .donnees-list-detail {
+    grid-template-rows: 1fr;
+    opacity: 1;
+}
+.donnees-list-detail-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+.donnees-list-desc {
+    margin: 0 4px 10px;
+    font-size: 0.74rem;
+    line-height: 1.5;
+    opacity: 0.85;
+    color: var(--nav-label-color, #2a2a2a);
+}
+.donnees-list-meta {
+    margin: 0 4px 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+}
+.donnees-list-meta div { min-height: 0; overflow: visible; }
+.donnees-list-meta dt {
+    font-size: 0.56rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.55;
+    margin-bottom: 2px;
+}
+.donnees-list-meta dd {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.donnees-list-explore {
+    margin: 0 4px 12px;
+    background: none;
+    border: 1px solid var(--nav-line-color, #3d2b1f);
+    border-radius: 2px;
+    padding: 7px 12px;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--nav-label-color, #2a2a2a);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+.donnees-list-explore:hover {
+    background: color-mix(in srgb, var(--nav-line-color, #3d2b1f) 12%, transparent);
+}
+
+@media (max-width: 760px) {
+    .donnees-list { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .donnees-callout, .donnees-hover-tag, .donnees-back,
+    .donnees-list, .donnees-list-detail, .donnees-list-caret { transition: none; }
+}

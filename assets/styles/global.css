@@ -1,0 +1,377 @@
+:root {
+    /* Solid Earth Tones */
+    --cube-wire-color: #3d2b1f; 
+    --cube-corner-color: #ffffff; 
+
+    /* Remove the 'glow' effect by using a duller color */
+    --cube-rim-color: #5c4033; 
+
+    /* Geological Strata */
+    --cube-band-0: #2d1b12; /* Deepest bedrock */
+    --cube-band-1: #4a3728; 
+    --cube-band-2: #6b503d; 
+    --cube-band-3: #8b6e56; 
+    --cube-band-4: #a0846e; 
+    --cube-band-5: #bda28b; /* Topsoil */
+
+    --cube-top-color: #556b2f; /* Moss/Surface */
+    --cube-bottom-color: #2d1b12;
+
+    /* Optional per-face rim glow override -- if left unset, top/bottom fall
+       back to --cube-rim-color above. */
+    --cube-top-rim-color: #556b2f;
+    --cube-bottom-rim-color: #2d1b12;
+
+    /* Interaction colors */
+    --cube-hover-color: #8b5a2b;
+    --cube-click-color: #5c4033;
+    /* Ripple burst on hover -- the ring's color cycles between these two as
+       it expands. Not the always-on flowing line pattern (not configurable
+       via CSS var, see FACE_FRAGMENT_SHADER in cube-scene.js). */
+    --cube-ripple-color-a: #2b6d8b;
+    --cube-ripple-color-b: #a0846e;
+
+    --nav-line-color: #3d2b1f;
+    --nav-label-color: #3d2b1f;
+    --nav-label-hover-color: #8b5a2b;
+
+    /* Background dot grid -- one uniform grid (all dots same size/spacing),
+       drawn as a small repeating tile with each dot's opacity randomized so
+       some read as fainter than others. See buildDotGridTexture() in
+       cube-scene.js for size/spacing/opacity-range/randomization -- this color
+       var is the only part of the look that lives here. Plain hex, no alpha
+       needed (opacity is randomized per-dot in JS instead). */
+    --bg-dot-color: #bb957b;
+
+    /* Tokens partagés par la barre de nav (.hud) et les pages de contenu, pour
+       que le nav soit IDENTIQUE partout (index, jouer, donnees). */
+    --paper: #d3dada;
+    --ink: #6b503d;
+    --line: #8b6e56;
+    --moss: #556b2f;
+    --font-display: 'Archivo', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --ease: cubic-bezier(.19, 1, .22, 1);
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+    background-color: #d3dada;
+    font-family: arial, sans-serif;
+}
+
+/* Parallax-shifted dot grid, positioned/animated from cube-scene.js (translated
+   via JS on mousemove relative to the cube). background-image is a repeating
+   canvas-generated tile set from JS (see buildDotGridTexture()) -- that's
+   where each dot's randomized opacity comes from. */
+.bg-dots {
+    position: fixed;
+    inset: -10%; /* overscan so the parallax shift never reveals a hard edge */
+    pointer-events: none;
+    background-repeat: repeat;
+    /* No z-index here on purpose -- negative z-index has cross-browser quirks
+       with sitting behind the page's own background in some engines. This
+       div is created/inserted before the canvas in cube-scene.js, and plain
+       DOM order alone is enough to keep it underneath it. */
+}
+
+canvas {
+    display: block;
+}
+
+/* ==========================================================================
+   BARRE DE NAV (.hud) -- UNE seule définition, partagée par toutes les pages
+   (index.html, jouer.html, donnees.html). « GEO3D » (gauche) et « retour à la
+   surface » (droite) sont des liens cliquables vers la surface (index.html) ;
+   sur index, merge-scroll.js intercepte data-to-top pour remonter au cube.
+   Markup attendu :
+     <header class="hud">
+       <a class="brand" href="./index.html">GEO3D</a>
+       <div class="hud-right">
+         <span class="section">…</span>            (optionnel, propre à la page)
+         <a class="to-surface" href="./index.html">retour à la surface</a>
+       </div>
+     </header>
+   Les polices Archivo + IBM Plex Mono doivent être chargées par la page.
+   ========================================================================== */
+.hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 28px;
+    font-family: var(--font-mono, monospace);
+    font-size: 12px;
+    letter-spacing: .08em;
+}
+.hud .brand {
+    font-family: var(--font-display, sans-serif);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: .02em;
+    color: var(--ink, #6b503d);
+    text-decoration: none;
+}
+.hud-right {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+.hud .section {
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    color: var(--line, #8b6e56);
+}
+.hud a {
+    color: inherit;
+    text-decoration: none;
+    position: relative;
+}
+/* Les DEUX liens (marque + retour) sont cliquables, avec soulignement animé. */
+.hud a.brand,
+.hud a.to-surface {
+    cursor: pointer;
+}
+.hud a.brand::after,
+.hud a.to-surface::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -3px;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform .5s var(--ease, ease);
+}
+.hud a.brand:hover::after,
+.hud a.brand:focus-visible::after,
+.hud a.to-surface:hover::after,
+.hud a.to-surface:focus-visible::after {
+    transform: scaleX(1);
+    transform-origin: left;
+}
+
+/* Cube nav labels (the "le projet" / "jouer" / "données" links floating next
+   to the cube). Position (top/left/right) is set per-item from CONFIG.nav in
+   cube-scene.js -- everything else about their look/spacing goes here. */
+.cube-nav-label {
+    position: fixed;
+    pointer-events: auto;
+    font-family: sans-serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    text-decoration: none;
+    letter-spacing: 0.03em;
+    text-transform: lowercase;
+    padding: 0.4em 0.8em;
+    transition: color 0.2s ease;
+}
+
+/* Wrapper + SVG overlay the cube nav labels/connector lines are drawn into
+   (cube-scene.js) -- opacity is animated per-frame from JS during the intro
+   fade, everything else here is static. */
+.cube-nav-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+.cube-nav-svg {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Cursor-follow ring shown while hovering the cube (cube-scene.js) -- position
+   and hover scale/transform are set per-frame from JS. */
+.cube-cursor-ring {
+    position: fixed;
+    width: 40px;
+    height: 40px;
+    left: -50px;
+    top: -50px;
+    border: 2px solid var(--nav-label-color, #999);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Cosmetic loading bar shown over the cube during CONFIG.intro.delay
+   (cube-scene.js) -- only the fill's width/transition-duration (tied to that
+   config value) and the wrap's fade-out opacity are set from JS. */
+.cube-intro-wrap {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    z-index: 9998;
+    transition: opacity 0.5s ease;
+}
+.cube-intro-label {
+    font-family: sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--cube-wire-color);
+}
+.cube-intro-bar-track {
+    width: 320px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(128, 128, 128, 0.25);
+    overflow: hidden;
+}
+.cube-intro-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: var(--cube-wire-color);
+    box-shadow: 0 0 12px 1px var(--cube-wire-color);
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 5rem;
+    font-weight: bolder;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center; /* This keeps icons and text aligned */
+    gap: 20px;
+}
+
+/* Optional: ensure icons have a consistent look */
+.nav-links a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--nav-label-color);
+}
+
+/* Logo link text (jouer.html header) -- inherits the surrounding color
+   instead of the browser's default link blue/underline. */
+.logo-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* ============== PAGE JOUER -- intégration du jeu Unity WebGL ============== */
+.game-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 6rem);
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.unity-desktop {
+    position: relative;
+    width: 960px;
+    max-width: 100%;
+    aspect-ratio: 960 / 600;
+    background-color: var(--cube-band-0);
+    border: 1px solid var(--cube-wire-color);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+#unity-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background-color: var(--cube-band-0);
+}
+
+#unity-loading-bar {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    background-color: var(--cube-band-0);
+}
+
+#unity-logo {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    border: 3px solid var(--cube-band-3);
+    border-top-color: var(--cube-hover-color);
+    animation: unity-logo-spin 1s linear infinite;
+}
+
+@keyframes unity-logo-spin {
+    to { transform: rotate(360deg); }
+}
+
+#unity-progress-bar-empty {
+    width: 220px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: var(--cube-band-1);
+    overflow: hidden;
+}
+
+#unity-progress-bar-full {
+    width: 0%;
+    height: 100%;
+    background-color: var(--cube-hover-color);
+    transition: width 0.2s ease;
+}
+
+#unity-warning {
+    position: absolute;
+    top: 0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 90%;
+}
+
+.unity-warning-error,
+.unity-warning-info {
+    padding: 0.5rem 0.9rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.unity-warning-error {
+    background-color: #7a2626;
+    color: #ffffff;
+}
+
+.unity-warning-info {
+    background-color: var(--cube-band-4);
+    color: var(--cube-band-0);
+}

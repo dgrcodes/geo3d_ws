@@ -1,0 +1,313 @@
+/* ==========================================================================
+   LE PROJET -- « Journal de forage ». Scroll = profondeur. Stack : Three.js
+   (fond continu) + GSAP/ScrollTrigger + Lenis. Split de texte fait maison.
+   ========================================================================== */
+
+/* ================= TOKENS ================= */
+:root{
+  /* Palette papier — reprise directe de la homepage */
+  --paper:#d3dada;
+  --ink:#6b503d;
+  --line: #8b6e56;
+  --faint:#6b503d;
+  --ghost:#2d1b12 !important;
+
+  /* Thème profond (strate données) */
+  --deep:#2d1b12 !important;
+  --deep-ink:#d3dada !important;
+
+  --font-display:'Archivo',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+
+  --ease:cubic-bezier(.19,1,.22,1);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:auto}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-display);
+  overflow-x:hidden;
+  transition:background 1.2s var(--ease),color 1.2s var(--ease);
+}
+/* Inversion en profondeur — appliquée par ScrollTrigger */
+body.is-deep{background:var(--deep);color:var(--deep-ink) !important}
+body.is-deep{
+  --line:#d3dada;
+  --faint:#a0846e;
+  --ghost:#8b6e56;
+}
+
+::selection{background:var(--faint);color:var(--ghost)}
+
+/* ================= SCÈNE WEBGL ================= */
+#scene{
+  position:fixed;inset:0;
+  width:100%;height:100vh;
+  z-index:0;
+  pointer-events:none;
+}
+
+/* Grain statique — feTurbulence SVG, quasi gratuit */
+.grain{
+  position:fixed;inset:0;z-index:3;pointer-events:none;
+  opacity:.05;mix-blend-mode:multiply;
+}
+body.is-deep .grain{mix-blend-mode:screen;opacity:.07}
+
+/* ================= HUD =================
+   La barre de nav (.hud) est désormais définie une seule fois dans global.css
+   (identique sur toutes les pages). Ne rien redéfinir ici. */
+
+/* Rail de profondeur — élément signature */
+.rail{
+  position:fixed;left:28px;top:50%;transform:translateY(-50%);
+  z-index:10;
+  display:flex;flex-direction:column;align-items:flex-start;gap:14px;
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;
+}
+.rail .depth-value{
+  font-size:13px;font-weight:500;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.rail .track{
+  width:1px;height:180px;background:var(--faint);position:relative;
+}
+.rail .track .fill{
+  position:absolute;top:0;left:0;width:100%;height:0%;
+  background:var(--line);
+}
+.rail .track .tick{
+  position:absolute;left:-3px;width:7px;height:1px;background:var(--faint);
+}
+/* Three evenly-spaced ticks along the depth rail (was per-element inline
+   style="top:X%" -- fixed layout, belongs here, not on the elements). */
+.rail .track .tick:nth-of-type(1){top:25%}
+.rail .track .tick:nth-of-type(2){top:50%}
+.rail .track .tick:nth-of-type(3){top:75%}
+
+/* ================= STRUCTURE DES STRATES ================= */
+main{position:relative;z-index:2}
+
+.stratum{
+  min-height:100vh;
+  position:relative;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:16vh 8vw;
+}
+
+/* Étiquette de profondeur de chaque strate — remplace le 01/02/03 */
+.depth-tag{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;
+  color:var(--line);
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:4vh;
+}
+.depth-tag::before{
+  content:'';display:block;width:36px;height:1px;background:var(--line);
+}
+
+/* Titres display — reveal par caractères */
+.display{
+  font-weight:700;letter-spacing:-.02em;line-height:.95;
+  text-transform:uppercase;
+  font-size:clamp(44px,9vw,132px);
+}
+/* Sub-heading size variants (was per-element inline style="font-size:..."). */
+.display--lg{font-size:clamp(36px,6vw,88px)}
+.display--md{font-size:clamp(32px,5vw,72px)}
+.display .w{display:inline-block;white-space:nowrap}
+.display .ch{display:inline-block;will-change:transform}
+/* Masque de ligne pour le reveal */
+.mask{overflow:hidden;display:block}
+
+.lede{
+  max-width:52ch;font-size:clamp(16px,1.4vw,20px);line-height:1.55;
+  font-weight:400;margin-top:5vh;
+}
+.lede + .lede{margin-top:2.2vh}
+
+/* Annotation façon homepage : ligne fine + point + label mono */
+.annot{
+  font-family:var(--font-mono);font-size:11.5px;letter-spacing:.06em;
+  display:inline-flex;align-items:center;gap:10px;color:var(--line);
+}
+.annot::before{
+  content:'';width:5px;height:5px;border-radius:50%;
+  background:currentColor;flex:none;
+}
+
+/* ---------- Strate SURFACE ---------- */
+#s-surface{align-items:flex-start}
+#s-surface .scroll-cue{
+  position:absolute;bottom:6vh;left:8vw;
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;
+  display:flex;align-items:center;gap:12px;color:var(--line);
+}
+#s-surface .scroll-cue .arrow{
+  display:block;width:1px;height:34px;background:var(--line);
+  animation:probe 2.2s var(--ease) infinite;
+}
+@keyframes probe{
+  0%{transform:scaleY(0);transform-origin:top}
+  55%{transform:scaleY(1);transform-origin:top}
+  56%{transform-origin:bottom}
+  100%{transform:scaleY(0);transform-origin:bottom}
+}
+
+/* ---------- Strate PROJET ---------- */
+#s-projet .cols{
+  display:grid;grid-template-columns:1fr 1fr;gap:6vw;align-items:end;
+}
+#s-projet .why{justify-self:end;max-width:38ch}
+/* Constat/mission paragraph spacing (was per-element inline
+   style="margin-top:..."), scoped to this section only. */
+#s-projet .why .lede:first-of-type{margin-top:2vh}
+#s-projet .why .lede:last-of-type{margin-top:1.5vh}
+
+/* ---------- Strate OBJECTIFS : cibles reliées par des tracés SVG ---------- */
+#s-objectifs{min-height:130vh}
+.targets{position:relative;margin-top:8vh}
+.targets svg{
+  position:absolute;inset:0;width:100%;height:100%;
+  overflow:visible;pointer-events:none;
+}
+.targets path{
+  fill:none;stroke:var(--line);stroke-width:1;
+}
+.target{
+  position:relative;max-width:44ch;padding-left:28px;
+  margin-bottom:11vh;
+}
+.target:nth-child(odd of .target){margin-left:38%}
+.target::before{
+  content:'';position:absolute;left:0;top:6px;width:9px;height:9px;
+  border:1px solid var(--line);border-radius:50%;
+}
+.target h3{
+  font-size:clamp(20px,2.2vw,30px);font-weight:500;
+  letter-spacing:-.01em;margin-bottom:1.4vh;
+}
+.target p{font-size:15px;line-height:1.6;color:var(--line)}
+.target .annot{margin-bottom:1vh}
+
+/* ---------- Strate ÉQUIPE : stations le long du forage ---------- */
+#s-equipe .borehole{
+  position:relative;margin-top:6vh;
+  padding-left:min(10vw,120px);
+}
+#s-equipe .borehole::before{
+  content:'';position:absolute;left:calc(min(10vw,120px)/2);top:0;bottom:0;
+  width:1px;background:var(--faint);
+}
+.station{
+  position:relative;padding:3.4vh 0;
+  border-bottom:1px solid var(--ghost);
+  cursor:default;
+}
+.station::before{
+  content:'';position:absolute;top:50%;
+  left:calc(min(10vw,120px)/-2 - 4px);
+  width:9px;height:9px;border-radius:50%;
+  border:1px solid var(--line);background:var(--paper);
+  transform:translateY(-50%);
+  transition:background .4s var(--ease),transform .4s var(--ease);
+}
+body.is-deep .station::before{background:var(--deep)}
+.station:hover::before{background:var(--ink);transform:translateY(-50%) scale(1.4)}
+body.is-deep .station:hover::before{background:var(--deep-ink)}
+.station .row{
+  display:flex;align-items:baseline;justify-content:space-between;gap:24px;
+}
+.station .name{
+  font-size:clamp(22px,3vw,42px);font-weight:500;letter-spacing:-.01em;
+  transition:transform .5s var(--ease);
+}
+.station:hover .name{transform:translateX(14px)}
+.station .role{
+  font-family:var(--font-mono);font-size:11.5px;letter-spacing:.08em;
+  color:var(--line);text-align:right;flex:none;
+}
+.station .detail{
+  max-height:0;overflow:hidden;
+  transition:max-height .6s var(--ease),opacity .6s var(--ease),margin .6s var(--ease);
+  opacity:0;margin-top:0;
+  font-size:14.5px;line-height:1.6;color:var(--line);max-width:56ch;
+}
+.station:hover .detail,.station:focus-within .detail{
+  max-height:120px;opacity:1;margin-top:1.6vh;
+}
+
+/* ---------- Strate DONNÉES (sombre) ---------- */
+#s-donnees{min-height:120vh}
+#s-donnees .contours{
+  position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:.5;
+}
+#s-donnees .contours svg{width:100%;height:100%}
+#s-donnees .contours path{fill:none;stroke:var(--ghost);stroke-width:1}
+.data-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;margin-top:9vh;
+}
+.datum{border-top:1px solid var(--faint);padding-top:2.4vh}
+.datum .num{
+  font-family:var(--font-mono);font-weight:500;
+  font-size:clamp(34px,4.4vw,64px);letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+}
+.datum .num sup{font-size:.45em;letter-spacing:0}
+.datum .label{
+  font-family:var(--font-mono);font-size:11.5px;letter-spacing:.1em;
+  color:var(--line);margin-top:1vh;text-transform:uppercase;
+}
+.datum p{font-size:14px;line-height:1.6;color:var(--line);margin-top:1.6vh;max-width:30ch}
+
+/* ---------- Strate TECHNOLOGIES ---------- */
+.tech-list{margin-top:6vh;max-width:900px}
+.tech{
+  display:flex;align-items:baseline;justify-content:space-between;gap:24px;
+  padding:2.6vh 0;border-bottom:1px solid var(--ghost);
+  transition:padding-left .5s var(--ease);
+}
+.tech:first-child{border-top:1px solid var(--ghost)}
+.tech:hover{padding-left:18px}
+.tech .t-name{font-size:clamp(20px,2.6vw,36px);font-weight:500;letter-spacing:-.01em}
+.tech .t-for{
+  font-family:var(--font-mono);font-size:11.5px;letter-spacing:.08em;
+  color:var(--line);text-align:right;
+}
+
+/* ---------- Strate REMONTÉE ---------- */
+#s-fin{align-items:flex-start;text-align:left}
+#s-fin .cta{
+  margin-top:6vh;display:inline-flex;align-items:center;gap:16px;
+  font-family:var(--font-mono);font-size:13px;letter-spacing:.1em;
+  color:inherit;text-decoration:none;
+  border:1px solid var(--line);border-radius:999px;
+  padding:16px 30px;
+  transition:background .5s var(--ease),color .5s var(--ease);
+}
+#s-fin .cta:hover,#s-fin .cta:focus-visible{background:var(--ink);color:var(--paper)}
+body.is-deep #s-fin .cta:hover{background:var(--deep-ink);color:var(--deep)}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width:900px){
+  .stratum{padding:14vh 7vw}
+  .rail{left:14px}
+  .rail .track{height:110px}
+  #s-projet .cols{grid-template-columns:1fr;gap:5vh}
+  #s-projet .why{justify-self:start}
+  .target:nth-child(odd of .target){margin-left:0}
+  .data-grid{grid-template-columns:1fr;gap:6vh}
+  .station .row{flex-direction:column;align-items:flex-start;gap:6px}
+  .station .role{text-align:left}
+}
+
+/* ================= REDUCED MOTION ================= */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}

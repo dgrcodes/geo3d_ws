@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEO3D — Le lab</title>
+
+<!-- ============================================================
+     GEO3D — « Le lab ».
+     Le jeu GEO3D (Unity) ne peut pas être hébergé sur le site : cette page le
+     remplace par une galerie de captures vidéo de l'expérience. Même univers
+     visuel que index.html / le-projet.html (papier, encre brune, accent mousse,
+     Archivo + IBM Plex Mono, grille de points, grain).
+     La liste des vidéos se configure dans assets/scripts/jouer-lab.js (CLIPS).
+     ============================================================ -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- global.css (tokens partagés) -> jouer.css (propre à cette page) -->
+<link rel="stylesheet" href="./assets/styles/global.css">
+<link rel="stylesheet" href="./assets/styles/jouer.css">
+</head>
+<body>
+
+<!-- Grain (repris de le-projet.html) -->
+<svg class="grain" aria-hidden="true">
+  <filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2"/></filter>
+  <rect width="100%" height="100%" filter="url(#n)"/>
+</svg>
+
+<!-- HUD -->
+<header class="hud">
+  <a class="brand" href="./index.html">GEO3D</a>
+  <div class="hud-right">
+    <a href="./index.html" class="to-surface">retour à la surface</a>
+  </div>
+</header>
+
+<main class="lab">
+
+  <!-- ======== Intro ======== -->
+  <section class="lab-hero">
+    <p class="eyebrow">LE LABORATOIRE</p>
+    <h1 class="display">Le lab</h1>
+    <p class="lede">
+      Le jeu GEO3D est une simulation Unity qui se joue hors-ligne, sur place.
+      Le navigateur ne peut pas encore l'accueillir&nbsp;: en attendant, voici
+      des captures de l'expérience.
+    </p>
+  </section>
+
+  <!-- ======== Scène : lecteur + liste de captures ======== -->
+  <section class="lab-stage">
+
+    <!-- Lecteur principal (rempli par jouer-lab.js) -->
+    <div class="player">
+      <div class="player-frame" id="playerFrame">
+        <!-- injecté : <video> | <iframe> | placeholder -->
+      </div>
+      <div class="player-meta">
+        <p class="annot" id="playerEyebrow">EXTRAIT 01</p>
+        <h2 class="player-title" id="playerTitle">—</h2>
+        <p class="player-desc" id="playerDesc"></p>
+      </div>
+    </div>
+
+    <!-- Liste des captures (playlist) -->
+    <aside class="playlist" aria-label="Liste des captures">
+      <p class="playlist-head">Captures</p>
+      <ul class="clip-list" id="clipList"><!-- injecté par jouer-lab.js --></ul>
+      <p class="playlist-foot">
+        Des captures s'ajouteront au fil des sessions de test du jeu.
+      </p>
+    </aside>
+
+  </section>
+</main>
+
+<!-- ================= SCRIPTS ================= -->
+<script src="./assets/scripts/dom-utils.js"></script>
+<script src="./assets/scripts/bg-dots.js"></script>
+<script src="./assets/scripts/jouer-lab.js"></script>
+</body>
+</html>
