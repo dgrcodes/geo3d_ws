@@ -930,6 +930,50 @@ function smoothFieldData(field) {
     data.set(tmp);
 }
 
+// Horizontal-only companion to smoothFieldData() above: same separable
+// box-blur idea, but only the x and z passes -- the y pass is deliberately
+// left out so the wiggle's depth-wise oscillation (the actual reflector
+// bands, see applySeismicWiggle) stays sharp. Without this, the seismic
+// block's front/side faces read as grainy/pixelated because nx/nz (60/46)
+// are voxelized much more coarsely than ny (90, sized for the wiggle's own
+// Nyquist limit) -- a voxel-sized step is visible every ~1.5-2 degrees
+// across the section. Blurring x/z only smooths over that voxel graininess
+// without touching the fine vertical banding that's the whole point of the
+// seismic look. Used by BUILDERS.seismic.
+function smoothFieldDataXZ(field) {
+    const { nx, ny, nz, data } = field;
+    const tmp = new Float32Array(data.length);
+
+    for (let k = 0; k < nz; k++) {
+        const kOff = nx * ny * k;
+        for (let j = 0; j < ny; j++) {
+            const base = kOff + nx * j;
+            tmp[base] = (data[base] * 2 + data[base + 1]) / 3;
+            for (let i = 1; i < nx - 1; i++) {
+                const p = base + i;
+                tmp[p] = (data[p - 1] + data[p] + data[p + 1]) * 0.33333333;
+            }
+            tmp[base + nx - 1] = (data[base + nx - 2] + data[base + nx - 1] * 2) / 3;
+        }
+    }
+    data.set(tmp);
+
+    const plane = nx * ny;
+    for (let j = 0; j < ny; j++) {
+        for (let i = 0; i < nx; i++) {
+            const base = nx * j + i;
+            tmp[base] = (data[base] * 2 + data[base + plane]) / 3;
+            for (let k = 1; k < nz - 1; k++) {
+                const p = base + plane * k;
+                tmp[p] = (data[p - plane] + data[p] + data[p + plane]) * 0.33333333;
+            }
+            const last = base + plane * (nz - 1);
+            tmp[last] = (data[last - plane] + data[last] * 2) / 3;
+        }
+    }
+    data.set(tmp);
+}
+
 // block.js's jet() colormap is hardcoded (block.js is kept as-provided), so
 // there's no option to ask block.recolor() for grayscale directly. Instead
 // this runs AFTER recolor() and desaturates whatever jet() already wrote
@@ -1022,11 +1066,15 @@ function generateTerrainBodies() {
 const SEISMIC_FOLD = { amp: 0.14, freq: 2.1, phase: 0.6, freqZ: 1.4, phaseZ: 1.9 };
 // Highest frequency kept under ~4 voxels/cycle at ny=90 (see BUILDERS.seismic)
 // to stay clear of aliasing -- 28 cycles was tried and sat right at the edge.
+// Shifted up from an earlier {8,13,18,22} (keeping the same top cap) and the
+// dominant low-frequency term's amp trimmed down (260 -> 190) -- that term
+// alone was wide enough to read as thick, block-like bars; thinning it out
+// and leaning more on the higher terms gives narrower, more numerous bands.
 const SEISMIC_HARMONICS = [
-    { waveFreq: 8, amp: 260, phase: 0 },
-    { waveFreq: 13, amp: 150, phase: 0.7 },
-    { waveFreq: 18, amp: 90, phase: 1.6 },
-    { waveFreq: 22, amp: 55, phase: 2.4 }
+    { waveFreq: 10, amp: 190, phase: 0 },
+    { waveFreq: 15, amp: 140, phase: 0.7 },
+    { waveFreq: 19, amp: 95, phase: 1.6 },
+    { waveFreq: 22, amp: 65, phase: 2.4 }
 ];
 function applySeismicWiggle(field, t) {
     const { nx, ny, nz, data } = field;
@@ -1407,6 +1455,7 @@ const BUILDERS = {
             // adds the actual reflector pattern on top of that light texture.
             seisField.update(t);
             applySeismicWiggle(seisField, t);
+            smoothFieldDataXZ(seisField);
         }
 
         return {
@@ -1447,21 +1496,29 @@ const BUILDERS = {
                     mats.push({ mat: block.mesh.material, base: 1 });
                     group.add(block.mesh);
                     block.recolor();
-                    // No quantizeFieldData()/smoothFieldData() here -- real
-                    // seismic sections are a continuous grayscale/variable-
-                    // density display (not discretely banded like a
-                    // resistivity contour map), and smoothing would blur out
-                    // the fine wiggle detail that's the whole point here.
+                    // No quantizeFieldData() here -- real seismic sections
+                    // are a continuous grayscale/variable-density display,
+                    // not discretely banded like a resistivity contour map.
+                    // smoothFieldDataXZ() (called inside refreshSeismicData,
+                    // above) already ran before this recolor() -- it only
+                    // blurs the horizontal (x/z) directions to hide voxel
+                    // graininess, not the full 3-axis smoothFieldData() the
+                    // magnetic block uses, which would also blur along y and
+                    // wash out the fine wiggle detail that's the whole point
+                    // here.
                     // grayscaleBlockColors() runs last since it desaturates
-                    // whatever block.recolor() just wrote; contrast=1.8
+                    // whatever block.recolor() just wrote; contrast=1.35
                     // pushes it toward the dark/light extremes real seismic
-                    // wiggle bands have instead of a flat wash of mid-grays.
-                    grayscaleBlockColors(block, 1.8);
+                    // wiggle bands have instead of a flat wash of mid-grays,
+                    // but softer than an earlier 1.8 -- that value was
+                    // clipping too much of each band to pure black, reading
+                    // as heavier/more saturated bars than intended.
+                    grayscaleBlockColors(block, 1.35);
                 }
                 if (t - lastBlockUpdate >= BLOCK_UPDATE_INTERVAL) {
                     refreshSeismicData(t);
                     block.recolor();
-                    grayscaleBlockColors(block, 1.8);
+                    grayscaleBlockColors(block, 1.35);
                     lastBlockUpdate = t;
                 }
             }
